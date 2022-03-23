@@ -114,6 +114,14 @@ if __name__ == '__main__':
 
     _t = {'forward_pass': Timer(), 'misc': Timer()}
 
+    target_size = args.long_side
+    max_size = args.long_side
+
+    priorbox = PriorBox(cfg, image_size=(max_size, max_size))
+    priors = priorbox.forward()
+    priors = priors.to(device)
+    prior_data = priors.data
+
     # testing begin
     for i, img_name in enumerate(test_dataset):
         image_path = testset_folder + img_name
@@ -121,8 +129,6 @@ if __name__ == '__main__':
         img = np.float32(img_raw)
 
         # testing scale
-        target_size = args.long_side
-        max_size = args.long_side
         im_shape = img.shape
         im_size_min = np.min(im_shape[0:2])
         im_size_max = np.max(im_shape[0:2])
@@ -148,10 +154,6 @@ if __name__ == '__main__':
         loc, conf, landms = net(img)  # forward pass
         _t['forward_pass'].toc()
         _t['misc'].tic()
-        priorbox = PriorBox(cfg, image_size=(im_height, im_width))
-        priors = priorbox.forward()
-        priors = priors.to(device)
-        prior_data = priors.data
         boxes = decode(loc.data.squeeze(0), prior_data, cfg['variance'])
         boxes = boxes.clamp(max=1, min=0.00001)
         boxes = boxes * scale / resize
