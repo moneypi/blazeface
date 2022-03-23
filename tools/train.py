@@ -1,8 +1,8 @@
 from __future__ import print_function
 
 import sys
-sys.path.append("/data/face_detections/blazefacev3/config")
-sys.path.append("/data/face_detections/blazefacev3/blazeface")
+sys.path.append("../config")
+sys.path.append("../blazeface")
 
 import os
 import torch
@@ -34,7 +34,7 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
 parser = argparse.ArgumentParser(description='Training')
-parser.add_argument('--training_dataset', default='/data/face_detections/face_dataset/widerface/train/label.txt', help='Training dataset directory')
+parser.add_argument('--training_dataset', default='../../widerface/train/label.txt', help='Training dataset directory')
 parser.add_argument('--network', default='Blaze', help='Backbone network mobile0.25 or slim or RFB')
 parser.add_argument('--num_workers', default=8, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
@@ -43,7 +43,7 @@ parser.add_argument('--resume_net', default=None, help='resume net for retrainin
 parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for retraining')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
-parser.add_argument('--save_folder', default='/data/face_detections/blazefacev3/weights/train/', help='Location to save checkpoint models')
+parser.add_argument('--save_folder', default='../weights/train/', help='Location to save checkpoint models')
 
 args = parser.parse_args()
 

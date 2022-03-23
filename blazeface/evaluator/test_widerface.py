@@ -1,8 +1,8 @@
 from __future__ import print_function
 
 import sys
-sys.path.append("/data/face_detections/blazefacev3/config")
-sys.path.append("/data/face_detections/blazefacev3/blazeface")
+sys.path.append("../../config")
+sys.path.append("../../blazeface")
 
 import os
 import argparse
@@ -22,20 +22,20 @@ from utils.timer import Timer
 
 
 parser = argparse.ArgumentParser(description='Test')
-parser.add_argument('-m', '--trained_model', default='/data/face_detections/blazefacev3/weights/pretrain/Blaze_Final_640.pth',
+parser.add_argument('-m', '--trained_model', default='../../weights/pretrain/Blaze_Final_640.pth',
                     type=str, help='Trained state_dict file path to open')
 parser.add_argument('--network', default='Blaze', help='Backbone network mobile0.25 or slim or RFB')
 parser.add_argument('--origin_size', default=False, type=str, help='Whether use origin image size to evaluate')
 parser.add_argument('--long_side', default=320, help='when origin_size is false, long_side is scaled size(320 or 640 for long side)')
-parser.add_argument('--save_folder', default='/data/face_detections/blazefacev3/blazeface/evaluator/widerface_evaluate/widerface_txt', type=str, help='Dir to save txt results')
+parser.add_argument('--save_folder', default='../../blazeface/evaluator/widerface_evaluate/widerface_txt', type=str, help='Dir to save txt results')
 parser.add_argument('--cpu', action="store_true", default=False, help='Use cpu inference')
-parser.add_argument('--dataset_folder', default='/data/face_detections/face_dataset/widerface/val/images/', type=str, help='dataset path')
+parser.add_argument('--dataset_folder', default='../../../widerface/val/images/', type=str, help='dataset path')
 parser.add_argument('--confidence_threshold', default=0.01, type=float, help='confidence_threshold')
 parser.add_argument('--top_k', default=2000, type=int, help='top_k')
 parser.add_argument('--nms_threshold', default=0.5, type=float, help='nms_threshold')
 parser.add_argument('--keep_top_k', default=1000, type=int, help='keep_top_k')
-parser.add_argument('-s', '--save_image', action="store_true", default=False, help='show detection results')
-parser.add_argument('--vis_thres', default=0.17, type=float, help='visualization_threshold')
+parser.add_argument('-s', '--save_image', action="store_true", default=True, help='show detection results')
+parser.add_argument('--vis_thres', default=0.6, type=float, help='visualization_threshold')
 args = parser.parse_args()
 
 

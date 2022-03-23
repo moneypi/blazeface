@@ -67,7 +67,7 @@ cfg_blaze = {
     'cls_weight': 6,
     'landm_weight': 0.1, 
     'gpu_train': True,
-    'batch_size': 256,
+    'batch_size': 64,
     'ngpu': 1,
     'epoch': 200,
     'decay1': 130,
