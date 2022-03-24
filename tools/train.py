@@ -28,10 +28,11 @@ from models.net_rfb import RFB
 from models.net_blaze import Blaze
 from utils.data_loader import data_prefetcher, FastDataLoader
 import logging
+from torch.utils.tensorboard import SummaryWriter
 
 LOG_FORMAT = "%(asctime)s %(levelname)s : %(message)s"
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-
+logging.basicConfig(filename="log/train.log", level=logging.INFO, format=LOG_FORMAT)
+writer = SummaryWriter('log')
 
 parser = argparse.ArgumentParser(description='Training')
 parser.add_argument('--training_dataset', default='../../widerface/train/label.txt', help='Training dataset directory')
@@ -185,6 +186,9 @@ def train():
         optimizer.zero_grad()
         loss_l, loss_c, loss_landm = criterion(out, priors, targets)
         loss =  loss_l + loss_c + loss_landm
+
+        writer.add_scalar('loss', loss, epoch)
+        writer.add_scalar('lr', lr, epoch)
 
         ## fp32 training
         loss.backward()
