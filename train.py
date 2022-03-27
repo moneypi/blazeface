@@ -1,9 +1,10 @@
 from __future__ import print_function
 
 import sys
-sys.path.append("../config")
-sys.path.append("../blazeface")
+sys.path.append("config")
+sys.path.append("blazeface")
 
+import numpy as np
 import os
 import torch
 import torch.nn as nn
@@ -30,12 +31,15 @@ from utils.data_loader import data_prefetcher, FastDataLoader
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
+now_time=datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+log_dir = now_time + "_log"
+os.mkdir(log_dir)
 LOG_FORMAT = "%(asctime)s %(levelname)s : %(message)s"
-logging.basicConfig(filename="log/train.log", level=logging.INFO, format=LOG_FORMAT)
-writer = SummaryWriter('log')
+logging.basicConfig(filename=os.path.join(log_dir, "train.log"), level=logging.INFO, format=LOG_FORMAT)
+writer = SummaryWriter(log_dir)
 
 parser = argparse.ArgumentParser(description='Training')
-parser.add_argument('--training_dataset', default='../../widerface/train/label.txt', help='Training dataset directory')
+parser.add_argument('--training_dataset', default='../widerface/train/label.txt', help='Training dataset directory')
 parser.add_argument('--network', default='Blaze', help='Backbone network mobile0.25 or slim or RFB')
 parser.add_argument('--num_workers', default=8, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
@@ -44,7 +48,7 @@ parser.add_argument('--resume_net', default=None, help='resume net for retrainin
 parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for retraining')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
-parser.add_argument('--save_folder', default='../weights/train/', help='Location to save checkpoint models')
+parser.add_argument('--save_folder', default=log_dir + '/weights/', help='Location to save checkpoint models')
 
 args = parser.parse_args()
 
@@ -105,9 +109,10 @@ if args.resume_net is not None:
 
 if num_gpu >= 1 and gpu_train:
     net = torch.nn.DataParallel(net).cuda()
-
+    device = torch. device ("cuda")
 else:
     net = net.cuda()
+    device = torch. device ("cpu")
 
 cudnn.benchmark = True
 
@@ -127,8 +132,41 @@ with torch.no_grad():
     priors = priorbox.forward()
     priors = priors.cuda()
 
+# test_dataset = '../widerface/val/label.txt'
+# test_dataset = WiderFaceDetection(test_dataset,preproc(img_dim, rgb_mean))
+# test_data_loader = data.DataLoader(test_dataset, batch_size, 
+#                     num_workers=num_workers, collate_fn=detection_collate, pin_memory=True)
+
+def valid(model, epoch):
+    model.eval()
+
+    # class_num = data_loader.dataset.cls_num
+    # conf_mat = np.zeros((class_num, class_num))
+    loss_sigma = []
+    # valid_acc = []
+    # valid_miou = []
+
+    for i, data in enumerate(test_data_loader):
+        inputs, labels = data
+        inputs, labels = inputs.to(device), labels.to(device)
+
+        out = model(inputs)
+
+        loss_l, loss_c, loss_landm = criterion(out, priors, labels)
+        loss =  loss_l + loss_c + loss_landm
+
+        loss_sigma.append(loss.item())
+
+    loss_mean = np.mean(loss_sigma)
+    writer.add_scalar('test_loss', loss_mean, epoch)
+
+    # acc_mean = np.mean(valid_acc)
+    # miou_mean = np.mean(valid_miou)
+
+    # return loss_mean, acc_mean, conf_mat, miou_mean
+
 def train():
-    net.train()
+    # net.train()
     epoch = 0 + args.resume_epoch
     logging.info('Loading Dataset...')
 
@@ -159,6 +197,7 @@ def train():
     #                         collate_fn=detection_collate, pin_memory=True)
 
     for iteration in range(start_iter, max_iter):
+        net.train()
         if iteration % epoch_size == 0:
             # create batch iterator
             batch_iterator = data_prefetcher(loader, device)
@@ -187,7 +226,7 @@ def train():
         loss_l, loss_c, loss_landm = criterion(out, priors, targets)
         loss =  loss_l + loss_c + loss_landm
 
-        writer.add_scalar('loss', loss, epoch)
+        writer.add_scalar('train_loss', loss, epoch)
         writer.add_scalar('lr', lr, epoch)
 
         ## fp32 training
@@ -205,6 +244,7 @@ def train():
         logging.info('Epoch:{}/{} || Epochiter: {}/{} || Iter: {}/{} || Loc: {:.4f} Cla: {:.4f} Landm: {:.4f} || LR: {:.8f} || Batchtime: {:.4f} s || ETA: {}'
               .format(epoch, max_epoch, (iteration % epoch_size) + 1,
               epoch_size, iteration + 1, max_iter, loss_l.item(), loss_c.item(), loss_landm.item(), lr, batch_time, str(datetime.timedelta(seconds=eta))))
+        # valid(net, epoch=epoch)
 
     torch.save(net.state_dict(), save_folder + cfg['name'] + '_Final.pth')
 
