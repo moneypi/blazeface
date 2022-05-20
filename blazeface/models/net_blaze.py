@@ -6,15 +6,14 @@ import torch.nn.functional as F
 def conv_bn(inp, oup, stride, kernel_size=3, padding=1):
     return nn.Sequential(
         nn.Conv2d(inp, oup, kernel_size, stride, padding, bias=False),
-        nn.BatchNorm2d(oup),
-        nn.ReLU(inplace=True)
+        nn.Softsign()
     )
 
 
 def depth_conv2d(inp, oup, kernel=1, stride=1, pad=0):
     return nn.Sequential(
         nn.Conv2d(inp, inp, kernel_size = kernel, stride = stride, padding=pad, groups=inp),
-        nn.ReLU(inplace=True),
+        nn.Softsign(),
         nn.Conv2d(inp, oup, kernel_size=1)
     )
 
@@ -22,20 +21,18 @@ def depth_conv2d(inp, oup, kernel=1, stride=1, pad=0):
 def conv_dw(inp, oup, stride, kernel_size=5, padding=2):
     return nn.Sequential(
         nn.Conv2d(inp, inp, kernel_size, stride, padding, groups=inp, bias=False),
-        nn.BatchNorm2d(inp),
-        nn.ReLU(inplace=True),
+        nn.Softsign(),
         nn.Conv2d(inp, oup, kernel_size=1, stride=1, padding=0, bias=False),
-        nn.BatchNorm2d(oup)
+        # nn.BatchNorm2d(oup)
     )
 
 
 def conv_pw(inp, oup, stride, kernel_size=5, padding=2):
     return nn.Sequential(
         nn.Conv2d(inp, inp, kernel_size, stride, padding, bias=False),
-        nn.BatchNorm2d(inp),
-        nn.ReLU(inplace=True),
+        nn.Softsign(),
         nn.Conv2d(inp, oup, kernel_size=1, stride=1, padding=0, bias=False),
-        nn.BatchNorm2d(oup)
+        # nn.BatchNorm2d(oup)
     )
 
 
@@ -47,7 +44,7 @@ class BlazeBlock(nn.Module):
         self.inp = inp 
         self.use_pooling = self.stride != 1
         self.shortcut_oup = double_oup or oup
-        self.actvation = nn.ReLU(inplace=True)
+        self.actvation = nn.Softsign()
 
         if double_oup == None: 
             
@@ -57,18 +54,17 @@ class BlazeBlock(nn.Module):
         else:
             self.conv = nn.Sequential(
                     conv_dw(inp, oup, stride, kernel_size),
-                    nn.ReLU(inplace=True),
+                    nn.Softsign(),
                     conv_pw(oup, double_oup, 1, kernel_size),
-                    nn.ReLU(inplace=True)
+                    nn.Softsign()
                 )
-        
+
         if self.use_pooling:
             self.shortcut = nn.Sequential(
                 nn.MaxPool2d(kernel_size=stride, stride=stride),
                 nn.Conv2d(in_channels=inp, out_channels=self.shortcut_oup, kernel_size=1, stride=1),
-                nn.BatchNorm2d(self.shortcut_oup),
-                nn.ReLU(inplace=True)
-            ) 
+                nn.Softsign()
+            )
 
 
     def forward(self,x):

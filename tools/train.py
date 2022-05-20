@@ -18,7 +18,6 @@ from models.loss import MultiBoxLoss
 from models.loss.custom_loss import MultiBoxLoss as CustomLoss
 from models.loss.custom_loss2 import MultiBoxLoss as CustomLoss2
 from models.module.prior_box import PriorBox
-from apex import amp
 import time
 import datetime
 import math
